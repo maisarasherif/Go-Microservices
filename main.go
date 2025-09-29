@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log" //http package for creating web servers
+	"log"
 	"net/http"
 	"os"
 	"os/signal"

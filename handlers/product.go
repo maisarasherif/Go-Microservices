@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -34,7 +35,7 @@ func (p *Products) AddProduct(w http.ResponseWriter, r *http.Request) {
 
 	pr := r.Context().Value(KeyProduct{}).(data.Product)
 	data.AddProduct(&pr)
-	// test with $ $ curl localhost:9090 -v -d '{"name": "Big Baik", "description": "a long, crispy chicken fillet in long bun with pickles, lettuce, and garlic sauce", "price": 14.5}'
+	// test with $ curl localhost:9090 -v -d '{"name": "Big Baik", "description": "a long, crispy chicken fillet in long bun with pickles, lettuce, and garlic sauce", "price": 14.5}'
 }
 
 func (p Products) UpdateProducts(w http.ResponseWriter, r *http.Request) {
@@ -74,6 +75,19 @@ func (p *Products) MiddlewareProductValidation(next http.Handler) http.Handler {
 			http.Error(w, "Error reading product", http.StatusBadRequest)
 			return
 		}
+
+		// validate the product
+		err = pr.Validate()
+		if err != nil {
+			p.l.Println("[ERROR] validating product", err)
+			http.Error(
+				w,
+				fmt.Sprintf("Error validating product: %s", err),
+				http.StatusBadRequest,
+			)
+			return
+		}
+
 		ctx := context.WithValue(r.Context(), KeyProduct{}, pr)
 		r = r.WithContext(ctx)
 

@@ -4,15 +4,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"regexp"
 	"time"
+
+	"github.com/go-playground/validator/v10"
 )
 
+// using struct tags (how the fields should appear in json output)
 type Product struct {
-	ID          int     `json:"id"` //using struct tags (how the fields should appear in json output)
-	Name        string  `json:"name"`
-	Description string  `json:"description,omitempty"`
-	Price       float32 `json:"price"`
-	SKU         string  `json:"sku"`
+	ID          int     `json:"id"`
+	Name        string  `json:"name" validate:"required"`
+	Description string  `json:"description,omitempty"` // omitempty means it won't be included in the json fields if empty
+	Price       float32 `json:"price" validate:"gt=0"`
+	SKU         string  `json:"sku" validate:"required,skuf"`
 	CreatedOn   string  `json:"-"` //remove it from the json output. (internal use only)
 	UpdatedOn   string  `json:"-"`
 	DeletedOn   string  `json:"-"`
@@ -21,6 +25,20 @@ type Product struct {
 func (p *Product) FromJSON(r io.Reader) error {
 	e := json.NewDecoder(r)
 	return e.Decode(p)
+}
+
+func (p *Product) Validate() error {
+	validate := validator.New()
+	validate.RegisterValidation("skuf", validateSKU) //custom validation
+	return validate.Struct(p)
+}
+
+func validateSKU(fl validator.FieldLevel) bool {
+	// sku is of format abc-absd-dfsdf
+	re := regexp.MustCompile(`[a-z]+-[a-z]+-[a-z]+`)
+	matches := re.FindAllString(fl.Field().String(), -1)
+
+	return len(matches) == 1
 }
 
 type Products []*Product
