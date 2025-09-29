@@ -10,9 +10,10 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-// using struct tags (how the fields should appear in json output)
+var ErrProductNotFound = fmt.Errorf("Product Not Found")
+
 type Product struct {
-	ID          int     `json:"id"`
+	ID          int     `json:"id"` // using struct tags (how the fields should appear in json output)
 	Name        string  `json:"name" validate:"required"`
 	Description string  `json:"description,omitempty"` // omitempty means it won't be included in the json fields if empty
 	Price       float32 `json:"price" validate:"gt=0"`
@@ -73,7 +74,34 @@ func UpdateProduct(id int, p *Product) error {
 	return nil
 }
 
-var ErrProductNotFound = fmt.Errorf("Product Not Found")
+func DeleteProduct(id int) error {
+	i := findIndexByProductID(id)
+	if i == -1 {
+		return ErrProductNotFound
+	}
+
+	productList = append(productList[:i], productList[i+1])
+
+	return nil
+}
+
+func findIndexByProductID(id int) int {
+	for i, p := range productList {
+		if p.ID == id {
+			return i
+		}
+	}
+
+	return -1
+}
+func GetProductByID(id int) (*Product, error) {
+	i := findIndexByProductID(id)
+	if id == -1 {
+		return nil, ErrProductNotFound
+	}
+
+	return productList[i], nil
+}
 
 func findProduct(id int) (*Product, int, error) {
 	for i, p := range productList {
