@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"time"
 
+	gohandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/maisarasherif/Go-Microservices/handlers"
 )
@@ -33,14 +34,17 @@ func main() {
 
 	deleteRouter := sm.Methods(http.MethodDelete).Subrouter()
 	deleteRouter.HandleFunc("/{id:[0-9]+}", ph.DeleteProduct)
-	//deleteRouter.Use(ph.MiddlewareProductValidation)
+
+	// CORS
+	ch := gohandlers.CORS(gohandlers.AllowedOrigins([]string{"*"}))
 
 	s := &http.Server{
 		Addr:         ":9090",
-		Handler:      sm,
+		Handler:      ch(sm),
+		ErrorLog:     l,
 		IdleTimeout:  120 * time.Second,
-		ReadTimeout:  1 * time.Second,
-		WriteTimeout: 1 * time.Second,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 
 	go func() {
